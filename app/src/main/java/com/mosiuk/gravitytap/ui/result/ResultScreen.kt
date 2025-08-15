@@ -166,7 +166,7 @@ private fun ScoreCard(e: ScoreEntry) {
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
-            Text(text = "x${e.maxCombo} combo", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.combo_x, e.maxCombo), style = MaterialTheme.typography.bodyMedium)
             DifficultyChip(text = e.difficulty)
         }
     }

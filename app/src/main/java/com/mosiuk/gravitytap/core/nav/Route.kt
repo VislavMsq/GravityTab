@@ -2,6 +2,8 @@ package com.mosiuk.gravitytap.core.nav
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 sealed interface Route {
     @JvmInline
@@ -23,15 +25,8 @@ object Destinations {
     const val ROUTE_RESULT =
         "result?score={score}&difficulty={difficulty}&maxCombo={maxCombo}"
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun result(
-        score: Int,
-        difficulty: String,
-        maxCombo: Int,
-    ): String = "result?score=$score&difficulty=${
-        java.net.URLEncoder.encode(
-            difficulty,
-            Charsets.UTF_8
-        )
-    }&maxCombo=$maxCombo"
+    fun result(score: Int, difficulty: String, maxCombo: Int): String {
+        val d = URLEncoder.encode(difficulty, StandardCharsets.UTF_8.toString())
+        return "result?score=$score&difficulty=$d&maxCombo=$maxCombo"
+    }
 }

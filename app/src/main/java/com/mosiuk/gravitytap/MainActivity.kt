@@ -1,6 +1,5 @@
 package com.mosiuk.gravitytap
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,9 +17,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTheme {
                 val windowSizeClass = calculateWindowSizeClass(this)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    AppNavHost(windowSizeClass)
-                }
+                AppNavHost(windowSizeClass)
             }
         }
     }

@@ -20,6 +20,11 @@
     <string name="score">Score: %1$d</string>
     <string name="lives">Lives: %1$d</string>
     <string name="combo">Combo: %1$d</string>
+    <string name="combo_x">x%1$d combo</string>
+    <string name="difficulty_label_easy">Easy</string>
+    <string name="difficulty_label_normal">Normal</string>
+    <string name="difficulty_label_hard">Hard</string>
+
 
     <!-- Result -->
     <string name="result_title">Result</string>

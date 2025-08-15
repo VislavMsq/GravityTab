@@ -1,6 +1,7 @@
 package com.mosiuk.gravitytap.ui.menu
 
 import android.os.SystemClock
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,13 @@ import com.mosiuk.gravitytap.ui.vm.MenuEvent
 import com.mosiuk.gravitytap.ui.vm.MenuViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
+@StringRes
+private fun Difficulty.titleRes(): Int = when (this) {
+    Difficulty.EASY -> R.string.difficulty_label_easy
+    Difficulty.NORMAL -> R.string.difficulty_label_normal
+    Difficulty.HARD -> R.string.difficulty_label_hard
+}
 
 @Composable
 fun MenuScreen(
@@ -102,7 +110,8 @@ fun MenuScreen(
                         onClick = { vm.onEvent(MenuEvent.SelectDifficulty(diff)) },
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                         modifier = Modifier.height(controlH),
-                        label = { Text(diff.name) },
+                        // ✅ было: Text(diff.name)
+                        label = { Text(stringResource(diff.titleRes())) },
                     )
                 }
             }

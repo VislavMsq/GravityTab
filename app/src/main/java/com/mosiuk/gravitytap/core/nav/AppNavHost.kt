@@ -2,7 +2,6 @@
 
 package com.mosiuk.gravitytap.core.nav
 
-import android.os.Build
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -83,11 +82,9 @@ fun AppNavHost(windowSizeClass: WindowSizeClass) {
                 windowSizeClass = windowSizeClass,
                 onFinish = { score, diff, maxCombo ->
                     scope.launch {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            navController.navigate(Destinations.result(score, diff, maxCombo)) {
-                                launchSingleTop = true
-                                popUpTo(Destinations.ROUTE_MENU) { inclusive = false }
-                            }
+                        navController.navigate(Destinations.result(score, diff, maxCombo)) {
+                            launchSingleTop = true
+                            popUpTo(Destinations.ROUTE_MENU) { inclusive = false }
                         }
                     }
                 },
