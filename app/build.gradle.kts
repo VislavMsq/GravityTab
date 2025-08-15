@@ -54,6 +54,7 @@ kotlin {
 }
 
 dependencies {
+//    implementation(libs.lifecycle.runtime.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.material)
