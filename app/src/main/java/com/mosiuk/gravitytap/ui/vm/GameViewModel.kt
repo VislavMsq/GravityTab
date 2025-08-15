@@ -47,7 +47,7 @@ class GameViewModel @Inject constructor(
     private val tickUC: TickPhysicsUseCase,
     private val scoreUC: UpdateScoreOnHitUseCase,
     private val dispatchers: DispatchersProvider,
-    private val settings: SettingsDataStore,          // ⬅️ keep reference
+    private val settings: SettingsDataStore,
     private val sound: SoundManager,
 ) : ViewModel() {
 
@@ -94,10 +94,9 @@ class GameViewModel @Inject constructor(
     private val loop = GameLoop(frameMs = 16L)
 
     init {
-        // ⬅️ Подписка на переключатель звука из DataStore
         viewModelScope.launch {
             settings.settings
-                .map { it.second }            // берём только флаг звука
+                .map { it.second }
                 .distinctUntilChanged()
                 .collect { on -> setSoundEnabled(on) }
         }
@@ -142,7 +141,6 @@ class GameViewModel @Inject constructor(
             )
         }
 
-        // локальное определение hit/miss
         val wasHit = newState.score > prevState.score
         val wasMiss = newState.lives < prevState.lives
         when {
@@ -156,7 +154,7 @@ class GameViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        sound.release() // ⬅️ важно
+        sound.release()
         super.onCleared()
     }
 }
