@@ -1,3 +1,4 @@
+// core/util/SoundManager.kt
 package com.mosiuk.gravitytap.core.util
 
 import android.content.Context
@@ -13,6 +14,7 @@ class SoundManager @Inject constructor(
     private val hitId: Int
     private val missId: Int
     @Volatile private var loaded = false
+    @Volatile private var muted = false   // <-- NEW
 
     init {
         val attrs = AudioAttributes.Builder()
@@ -33,8 +35,20 @@ class SoundManager @Inject constructor(
         missId = soundPool.load(ctx, com.mosiuk.gravitytap.R.raw.miss, 1)
     }
 
-    fun playHit(enabled: Boolean) { if (enabled && loaded) soundPool.play(hitId, 1f, 1f, 1, 0, 1f) }
-    fun playMiss(enabled: Boolean) { if (enabled && loaded) soundPool.play(missId, 1f, 1f, 1, 0, 1f) }
+    fun setMuted(value: Boolean) { muted = value }       // <-- NEW
+    fun stopAll() { soundPool.autoPause() }              // <-- NEW
+
+    fun playHit(enabled: Boolean) {
+        if (enabled && !muted && loaded) {
+            soundPool.play(hitId, 1f, 1f, 1, 0, 1f)
+        }
+    }
+
+    fun playMiss(enabled: Boolean) {
+        if (enabled && !muted && loaded) {
+            soundPool.play(missId, 1f, 1f, 1, 0, 1f)
+        }
+    }
 
     fun release() = soundPool.release()
 }

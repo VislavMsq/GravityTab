@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mosiuk.gravitytap.R
 import com.mosiuk.gravitytap.core.util.ClickThrottle
 import com.mosiuk.gravitytap.domain.model.Difficulty
@@ -71,7 +72,7 @@ fun MenuScreen(
     vm: MenuViewModel = hiltViewModel(),
 ) {
     // Получаем состояние UI из ViewModel
-    val ui by vm.ui.collectAsState()
+    val ui by vm.ui.collectAsStateWithLifecycle()
     // Инициализируем троттлинг для предотвращения множественных нажатий
     val throttle = remember { ClickThrottle(windowMs = 600) }
     // Корутин-скоп для асинхронных операций

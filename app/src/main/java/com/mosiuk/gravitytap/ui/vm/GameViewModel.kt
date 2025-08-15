@@ -5,7 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mosiuk.gravitytap.core.util.DispatchersProvider
-import com.mosiuk.gravitytap.core.util.SoundManager // <-- ADDED импорт (проверь пакет)
+import com.mosiuk.gravitytap.core.util.SoundManager
+import com.mosiuk.gravitytap.data.datastore.SettingsDataStore
 import com.mosiuk.gravitytap.domain.game.GameAction
 import com.mosiuk.gravitytap.domain.game.GameEffect
 import com.mosiuk.gravitytap.domain.game.GameLoop
@@ -23,6 +24,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.map                   // ⬅️ NEW
+import kotlinx.coroutines.flow.distinctUntilChanged // ⬅️ NEW
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -44,7 +47,8 @@ class GameViewModel @Inject constructor(
     private val tickUC: TickPhysicsUseCase,
     private val scoreUC: UpdateScoreOnHitUseCase,
     private val dispatchers: DispatchersProvider,
-    private val sound: SoundManager,                 // <-- ADDED: инъекция звука
+    private val settings: SettingsDataStore,          // ⬅️ keep reference
+    private val sound: SoundManager,
 ) : ViewModel() {
 
     private companion object {
@@ -53,10 +57,13 @@ class GameViewModel @Inject constructor(
         const val KEY_ARG_DIFFICULTY = "difficulty"
     }
 
-    // <-- ADDED: флаг включения звука (можно менять из экрана/настроек)
     @Volatile
     private var soundEnabled: Boolean = true
-    fun setSoundEnabled(enabled: Boolean) { soundEnabled = enabled }
+    fun setSoundEnabled(enabled: Boolean) {
+        soundEnabled = enabled
+        sound.setMuted(!enabled)
+        if (!enabled) sound.stopAll()
+    }
 
     private var reducer =
         GameReducer(
@@ -73,9 +80,7 @@ class GameViewModel @Inject constructor(
             val diff = runCatching { Difficulty.valueOf(arg) }.getOrDefault(Difficulty.NORMAL)
             return GameState(diff)
         }
-        set(value) {
-            handle[KEY_STATE] = value
-        }
+        set(value) { handle[KEY_STATE] = value }
 
     private val scheduler =
         SpawnScheduler(handle.get<Long>(KEY_NEXT_SPAWN) ?: SystemClock.uptimeMillis())
@@ -89,10 +94,18 @@ class GameViewModel @Inject constructor(
     private val loop = GameLoop(frameMs = 16L)
 
     init {
+        // ⬅️ Подписка на переключатель звука из DataStore
+        viewModelScope.launch {
+            settings.settings
+                .map { it.second }            // берём только флаг звука
+                .distinctUntilChanged()
+                .collect { on -> setSoundEnabled(on) }
+        }
+
+        // Игровой цикл
         viewModelScope.launch(dispatchers.main) {
             loop.ticks().collect { tick ->
                 onAction(tick)
-
                 val d = state.difficulty
                 if (state.ball == null && scheduler.shouldSpawn(tick.nowMs, d.spawnMs)) {
                     onAction(GameAction.Spawn(tick.nowMs))
@@ -106,20 +119,18 @@ class GameViewModel @Inject constructor(
             GameUiEvent.PauseToggle -> onAction(GameAction.PauseToggle)
             GameUiEvent.OnBallTap -> onAction(GameAction.Tap)
             is GameUiEvent.SetGround -> {
-                reducer =
-                    GameReducer(
-                        tick = tickUC,
-                        spawn = spawnUC,
-                        score = scoreUC,
-                        groundY = e.groundPx,
-                    )
+                reducer = GameReducer(
+                    tick = tickUC,
+                    spawn = spawnUC,
+                    score = scoreUC,
+                    groundY = e.groundPx,
+                )
             }
         }
     }
 
     private fun onAction(action: GameAction) {
         val prevState = state
-
         val (newState, effect) = reducer.reduce(prevState, action)
 
         if (newState != prevState) {
@@ -131,6 +142,7 @@ class GameViewModel @Inject constructor(
             )
         }
 
+        // локальное определение hit/miss
         val wasHit = newState.score > prevState.score
         val wasMiss = newState.lives < prevState.lives
         when {
@@ -141,5 +153,10 @@ class GameViewModel @Inject constructor(
         if (effect != null) {
             viewModelScope.launch { _effects.send(effect) }
         }
+    }
+
+    override fun onCleared() {
+        sound.release() // ⬅️ важно
+        super.onCleared()
     }
 }
