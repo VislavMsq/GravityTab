@@ -1,0 +1,7 @@
+<resources>
+  <string name="start">Старт</string>
+  <string name="high_scores">Рекорды</string>
+  <string name="settings">Настройки</string>
+  <string name="play_again">Сыграть ещё</string>
+</resources>
+

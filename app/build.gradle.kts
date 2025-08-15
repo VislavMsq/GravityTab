@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.compose)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -23,22 +25,39 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
 
-    buildFeatures { compose = true }
-    composeOptions {
-        kotlinCompilerExtensionVersion = null // через BOM
+    // ВЫРОВНЯТЬ Java на 17
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
+    buildFeatures { compose = true }
+
+    // Для Kotlin 2.x composeOptions не нужен
+    // composeOptions { kotlinCompilerExtensionVersion = null }
+
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+
+    // Можно оставить, но главное — toolchain и compileOptions
     kotlinOptions { jvmTarget = "17" }
+}
+
+// <<< ВНЕ android {} >>>
+kotlin {
+    // Рекомендуемый способ для Kotlin 2.x
+    jvmToolchain(17)
 }
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.compose.ui)
+    implementation(libs.material)
+
     implementation(libs.compose.material3)
     implementation(libs.compose.window.size)
     debugImplementation(libs.compose.ui.tooling)

@@ -1,3 +1,14 @@
 <resources>
-    <string name="app_name">GravityTap</string>
+    <string name="app_name">Gravity Tap</string>
+    <string name="start">Start</string>
+    <string name="high_scores">High Scores</string>
+    <string name="settings">Settings</string>
+    <string name="play_again">Play again</string>
+    <string name="result_title">Result</string>
+    <string name="result_score">Score: %1$d</string>
+    <string name="result_diff">Difficulty: %1$s</string>
+    <string name="result_combo">Max combo: %1$d</string>
+    <string name="new_high_score">New high score!</string>
+    <string name="back_to_menu">Back to menu</string>
+
 </resources>

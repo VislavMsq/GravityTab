@@ -5,10 +5,12 @@ import com.mosiuk.gravitytap.domain.model.ScoreEntry
 import com.mosiuk.gravitytap.domain.repo.HighScoreRepository
 import javax.inject.Inject
 
-class HighScoreRepositoryImpl @Inject constructor(
-    private val dao: ScoreDao
-) : HighScoreRepository {
+class HighScoreRepositoryImpl
+    @Inject
+    constructor(
+        private val dao: ScoreDao,
+    ) : HighScoreRepository {
+        override suspend fun save(entry: ScoreEntry) = dao.insert(entry)
 
-    override suspend fun save(entry: ScoreEntry) = dao.insert(entry)
-    override fun top(limit: Int) = dao.top(limit)
-}
+        override fun top(limit: Int) = dao.top(limit)
+    }

@@ -23,79 +23,113 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class GameUiState(
     val state: GameState,
-    val timeMs: Long = 0L
+    val timeMs: Long = 0L,
 )
 
 sealed interface GameUiEvent {
-    data object PauseToggle : GameUiEvent;
+    data object PauseToggle : GameUiEvent
+
     data object OnBallTap : GameUiEvent
+
+    data class SetGround(
+        val groundPx: Float,
+    ) : GameUiEvent
 }
 
 @HiltViewModel
-class GameViewModel(
-    private val handle: SavedStateHandle,
-    private val spawnUC: SpawnBallUseCase,
-    tickUC: TickPhysicsUseCase,
-    scoreUC: UpdateScoreOnHitUseCase,
-    private val dispatchers: DispatchersProvider
-) : ViewModel() {
-
-    private val reducer = GameReducer(tick = tickUC, spawn = spawnUC, score = scoreUC)
-
-    private var state: GameState
-        get() = handle["state"] ?: GameState(Difficulty.NORMAL)
-        set(value) {
-            handle["state"] = value
+class GameViewModel
+    @Inject
+    constructor(
+        private val handle: SavedStateHandle,
+        private val spawnUC: SpawnBallUseCase,
+        private val tickUC: TickPhysicsUseCase, // ← ТЕПЕРЬ это поля класса
+        private val scoreUC: UpdateScoreOnHitUseCase, // ← ТЕПЕРЬ это поля класса
+        private val dispatchers: DispatchersProvider,
+    ) : ViewModel() {
+        private companion object {
+            const val KEY_STATE = "state"
+            const val KEY_NEXT_SPAWN = "nextSpawnAt"
+            const val KEY_ARG_DIFFICULTY = "difficulty"
         }
 
-    private val scheduler = SpawnScheduler(handle["nextSpawnAt"] ?: SystemClock.uptimeMillis())
+        // можно безопасно пересоздавать при изменении ground
+        private var reducer =
+            GameReducer(
+                tick = tickUC,
+                spawn = spawnUC,
+                score = scoreUC,
+                groundY = 1000f,
+            )
 
-    private val _ui = MutableStateFlow(GameUiState(state))
+        private var state: GameState
+            get() {
+                handle.get<GameState>(KEY_STATE)?.let { return it }
+                val arg = handle.get<String>(KEY_ARG_DIFFICULTY) ?: Difficulty.NORMAL.name
+                val diff = runCatching { Difficulty.valueOf(arg) }.getOrDefault(Difficulty.NORMAL)
+                return GameState(diff)
+            }
+            set(value) {
+                handle[KEY_STATE] = value
+            }
 
-    val ui: StateFlow<GameUiState> = _ui.asStateFlow()
+        private val scheduler =
+            SpawnScheduler(handle.get<Long>(KEY_NEXT_SPAWN) ?: SystemClock.uptimeMillis())
 
-    private val _effects = Channel<GameEffect>(Channel.BUFFERED)
+        private val _ui = MutableStateFlow(GameUiState(state))
+        val ui: StateFlow<GameUiState> = _ui.asStateFlow()
 
-    val effect: Flow<GameEffect> = _effects.receiveAsFlow()
-    private val loop = GameLoop(frameMs = 16L)
+        private val _effects = Channel<GameEffect>(Channel.BUFFERED)
+        val effects: Flow<GameEffect> = _effects.receiveAsFlow()
 
-    init {
-        viewModelScope.launch(dispatchers.main) {
-            loop.ticks().collect { tick ->
-                onAction(tick)
+        private val loop = GameLoop(frameMs = 16L)
 
-                val d = state.difficulty
-                if (state.ball == null && scheduler.shouldSpawn(tick.nowMs, d.spawnsMs)) {
-                    onAction(GameAction.Spawn(tick.nowMs))
+        init {
+            viewModelScope.launch(dispatchers.main) {
+                loop.ticks().collect { tick ->
+                    onAction(tick)
+
+                    val d = state.difficulty
+                    if (state.ball == null && scheduler.shouldSpawn(tick.nowMs, d.spawnMs)) {
+                        onAction(GameAction.Spawn(tick.nowMs))
+                    }
                 }
             }
         }
-    }
 
-    fun onEvent(e: GameUiEvent) {
-        when (e) {
-            GameUiEvent.PauseToggle -> onAction(GameAction.PauseToggle)
-            GameUiEvent.OnBallTap -> onAction(GameAction.Tap)
+        fun onEvent(e: GameUiEvent) {
+            when (e) {
+                GameUiEvent.PauseToggle -> onAction(GameAction.PauseToggle)
+                GameUiEvent.OnBallTap -> onAction(GameAction.Tap)
+                is GameUiEvent.SetGround -> {
+                    // пересоздаём редьюсер с новым ground
+                    reducer =
+                        GameReducer(
+                            tick = tickUC,
+                            spawn = spawnUC,
+                            score = scoreUC,
+                            groundY = e.groundPx,
+                        )
+                }
+            }
         }
-    }
 
-    private fun onAction(a: GameAction) {
-        val (newState, effect) = reducer.reduce(state, a)
-
-        if (newState != state) {
-            state = newState
-            handle["nextSpawnAt"] = scheduler.snapshot()
-            _ui.value =
-                _ui.value.copy(state = newState, timeMs = (a as? GameAction.Tick)?.nowMs ?: 0L)
-        }
-        if (effect != null) {
-            viewModelScope.launch {
-                _effects.send(effect)
+        private fun onAction(a: GameAction) {
+            val (newState, effect) = reducer.reduce(state, a)
+            if (newState != state) {
+                state = newState
+                handle[KEY_NEXT_SPAWN] = scheduler.snapshot() // ← используем константу
+                _ui.value =
+                    _ui.value.copy(
+                        state = newState,
+                        timeMs = (a as? GameAction.Tick)?.nowMs ?: _ui.value.timeMs,
+                    )
+            }
+            if (effect != null) {
+                viewModelScope.launch { _effects.send(effect) }
             }
         }
     }
-}
-

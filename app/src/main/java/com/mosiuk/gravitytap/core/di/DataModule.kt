@@ -17,17 +17,18 @@ private const val DS_NAME = "settings.pd"
 @Module
 @InstallIn(SingletonComponent::class)
 object DataModule {
-
     @Provides @Singleton
-    fun provideDb(@ApplicationContext ctx: Context): AppDatabase =
-        Room.databaseBuilder(ctx, AppDatabase::class.java, DB_NAME).build()
+    fun provideDb(
+        @ApplicationContext ctx: Context,
+    ): AppDatabase = Room.databaseBuilder(ctx, AppDatabase::class.java, DB_NAME).build()
 
     @Provides @Singleton
     fun provideScoreDao(db: AppDatabase) = db.scoreDao()
 
     @Provides @Singleton
-    fun provideDataStore(@ApplicationContext ctx: Context) =
-        PreferenceDataStoreFactory.create {
-            ctx.preferencesDataStoreFile(DS_NAME)
-        }
+    fun provideDataStore(
+        @ApplicationContext ctx: Context,
+    ) = PreferenceDataStoreFactory.create {
+        ctx.preferencesDataStoreFile(DS_NAME)
+    }
 }
