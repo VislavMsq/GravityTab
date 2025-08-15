@@ -44,6 +44,13 @@ import com.mosiuk.gravitytap.domain.model.ScoreEntry
 import com.mosiuk.gravitytap.ui.vm.ResultViewModel
 import kotlinx.coroutines.launch
 
+/**
+ * Экран результатов игры, отображающий итоги последней игры и таблицу рекордов.
+ * 
+ * @param vm ViewModel экрана результатов, управляющий данными и логикой
+ * @param windowSizeClass Класс размера окна для адаптивного дизайна
+ * @param onPlayAgain Колбэк, вызываемый при нажатии кнопки "Играть снова"
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultScreen(
@@ -51,20 +58,28 @@ fun ResultScreen(
     windowSizeClass: WindowSizeClass,
     onPlayAgain: () -> Unit,
 ) {
+    // Получаем состояние UI из ViewModel
     val ui = vm.ui
     val top by vm.top.collectAsState()
 
+    // Настройка троттлинга для кнопки, чтобы избежать множественных нажатий
     val throttle = remember { ClickThrottle(windowMs = 600) }
     val scope = rememberCoroutineScope()
 
+    // Адаптивный дизайн в зависимости от размера экрана
     val compactH = windowSizeClass.heightSizeClass == WindowHeightSizeClass.Compact
     val isTablet = windowSizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
 
+    // Адаптивные размеры и отступы
     val hPadding = if (compactH) 12.dp else 16.dp
     val vGap = if (compactH) 8.dp else 16.dp
     val buttonH = if (compactH) 48.dp else 56.dp
+    
+    // Адаптивные пропорции для кнопок и контента
     val buttonWidthFraction = if (isTablet) 0.72f else if (compactH) 0.9f else 0.6f
     val contentMaxWidth = if (isTablet) 720.dp else 420.dp
+    
+    // Стили текста в зависимости от размера экрана
     val titleStyle =
         if (isTablet) MaterialTheme.typography.titleLarge
         else MaterialTheme.typography.titleMedium
@@ -134,6 +149,11 @@ fun ResultScreen(
     }
 }
 
+/**
+ * Компонент чипа сложности, отображающий уровень сложности игры.
+ * 
+ * @param text Текст для отображения в чипе (название сложности)
+ */
 @Composable
 private fun DifficultyChip(text: String) {
     AssistChip(
@@ -149,6 +169,11 @@ private fun DifficultyChip(text: String) {
     )
 }
 
+/**
+ * Карточка с результатом в таблице рекордов.
+ * 
+ * @param e Запись с результатом игры
+ */
 @Composable
 private fun ScoreCard(e: ScoreEntry) {
     Card(

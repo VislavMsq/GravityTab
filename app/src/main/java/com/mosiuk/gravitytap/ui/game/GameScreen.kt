@@ -40,34 +40,50 @@ import com.mosiuk.gravitytap.domain.game.GameEffect
 import com.mosiuk.gravitytap.ui.vm.GameUiEvent
 import com.mosiuk.gravitytap.ui.vm.GameViewModel
 
+/**
+ * Основной игровой экран, отображающий игровое поле, шарик и управляющие элементы.
+ * 
+ * @param vm ViewModel экрана игры, управляющий игровой логикой и состоянием
+ * @param onFinish Колбэк, вызываемый при завершении игры с результатами
+ * @param windowSizeClass Класс размера окна для адаптивного дизайна
+ */
 @Composable
 fun GameScreen(
     vm: GameViewModel,
     onFinish: (score: Int, difficulty: String, maxCombo: Int) -> Unit,
     windowSizeClass: WindowSizeClass,
 ) {
+    // Собираем состояние UI из ViewModel
     val ui by vm.ui.collectAsState()
 
+    // Обработка эффектов от ViewModel
     LaunchedEffect(Unit) {
         vm.effects.collect { eff ->
+            // При получении эффекта завершения игры вызываем колбэк с результатами
             if (eff is GameEffect.GameOver) {
                 onFinish(eff.score, eff.difficulty.name, eff.maxCombo)
             }
         }
     }
 
-    // чуть крупнее на планшете
+    // Адаптивный дизайн в зависимости от размера экрана
     val isTablet = windowSizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
+    
+    // Отступы и размеры элементов в зависимости от типа устройства
     val topHPadding = if (isTablet) 32.dp else 12.dp
+    
+    // Размер шарика адаптируется под размер экрана
     val ballSize: Dp =
         when (windowSizeClass.widthSizeClass) {
-            WindowWidthSizeClass.Compact -> 56.dp
-            WindowWidthSizeClass.Medium -> 80.dp
-            WindowWidthSizeClass.Expanded -> 96.dp
-            else -> 72.dp
+            WindowWidthSizeClass.Compact -> 56.dp    // Смартфоны
+            WindowWidthSizeClass.Medium -> 80.dp     // Планшеты
+            WindowWidthSizeClass.Expanded -> 96.dp   // Большие планшеты/складывающиеся
+            else -> 72.dp                           // По умолчанию
         }
 
+    // Основной каркас экрана с верхней панелью и игровым полем
     Scaffold(
+        // Верхняя панель с очками, жизнями и кнопкой паузы
         topBar = {
             Row(
                 modifier =
@@ -100,19 +116,24 @@ fun GameScreen(
                 }
             }
         },
-    ) { inner ->
+    ) { innerPadding ->
+        // Контейнер с ограничениями для позиционирования игровых элементов
+        // Используется для получения размеров экрана и позиционирования шарика
         BoxWithConstraints(
             modifier =
                 Modifier
-                    .padding(inner)
+                    .padding(innerPadding)
                     .fillMaxSize(),
         ) {
+            // Получаем размеры контейнера в пикселях
             val density = LocalDensity.current
-
             val widthPx = with(density) { maxWidth.toPx() }
             val heightPx = with(density) { maxHeight.toPx() }
+            
+            // Вычисляем ширину ячейки (игровое поле разделено на 3 колонки)
             val cellW = widthPx / 3f
 
+            // Преобразуем размер шарика в пиксели
             val ballSizePx = with(density) { ballSize.toPx() }
             val ballRadiusPx = ballSizePx / 2f
 
@@ -120,26 +141,34 @@ fun GameScreen(
                 vm.onEvent(GameUiEvent.SetGround(groundPx = heightPx - ballSizePx))
             }
 
+            // Получаем текущий шарик из состояния
             val ball = ui.state.ball
+            
+            // Анимированное отображение шарика с эффектами появления/исчезновения
             AnimatedVisibility(
                 visible = ball != null,
                 enter = fadeIn(tween(150)) + scaleIn(initialScale = .8f, animationSpec = tween(150)),
                 exit = fadeOut(tween(100)),
             ) {
                 if (ball != null) {
-                    val centerXpx = (ball.column + 0.5f) * cellW
-                    val leftXpx = centerXpx - ballRadiusPx
-                    val xDp = with(density) { leftXpx.toDp() }
-                    val yDp = with(density) { ball.y.toDp() }
+                    // Вычисляем координаты для отрисовки шарика
+                    val centerXpx = (ball.column + 0.5f) * cellW  // Центр по X в пикселях
+                    val leftXpx = centerXpx - ballRadiusPx         // Левый край шарика
+                    val xDp = with(density) { leftXpx.toDp() }     // X в dp для Compose
+                    val yDp = with(density) { ball.y.toDp() }      // Y в dp для Compose
 
+                    // Отрисовываем шарик как нажимаемый круг
                     Box(
                         modifier =
                             Modifier
-                                .offset(x = xDp, y = yDp)
-                                .size(ballSize)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.error)
-                                .clickable { vm.onEvent(GameUiEvent.OnBallTap) },
+                                .offset(x = xDp, y = yDp)  // Позиционируем шарик
+                                .size(ballSize)            // Устанавливаем размер
+                                .clip(CircleShape)         // Обрезаем по кругу
+                                .background(MaterialTheme.colorScheme.error)  // Красный цвет из темы
+                                .clickable { 
+                                    // Обработка нажатия на шарик
+                                    vm.onEvent(GameUiEvent.OnBallTap) 
+                                },
                     )
                 }
             }

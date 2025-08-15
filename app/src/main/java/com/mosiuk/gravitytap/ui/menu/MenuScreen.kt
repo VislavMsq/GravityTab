@@ -43,6 +43,11 @@ import com.mosiuk.gravitytap.ui.vm.MenuViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/**
+ * Возвращает строковый ресурс для отображения названия сложности.
+ * 
+ * @return Идентификатор строкового ресурса с названием сложности
+ */
 @StringRes
 private fun Difficulty.titleRes(): Int = when (this) {
     Difficulty.EASY -> R.string.difficulty_label_easy
@@ -50,6 +55,14 @@ private fun Difficulty.titleRes(): Int = when (this) {
     Difficulty.HARD -> R.string.difficulty_label_hard
 }
 
+/**
+ * Главный экран меню приложения, содержащий настройки и кнопки навигации.
+ * 
+ * @param windowSizeClass Класс размера окна для адаптивного дизайна
+ * @param onStart Колбэк, вызываемый при нажатии кнопки начала игры
+ * @param onScores Колбэк, вызываемый при нажатии кнопки перехода к таблице рекордов
+ * @param vm ViewModel экрана меню, управляющий состоянием и логикой
+ */
 @Composable
 fun MenuScreen(
     windowSizeClass: WindowSizeClass,
@@ -57,47 +70,72 @@ fun MenuScreen(
     onScores: () -> Unit,
     vm: MenuViewModel = hiltViewModel(),
 ) {
+    // Получаем состояние UI из ViewModel
     val ui by vm.ui.collectAsState()
+    // Инициализируем троттлинг для предотвращения множественных нажатий
     val throttle = remember { ClickThrottle(windowMs = 600) }
+    // Корутин-скоп для асинхронных операций
     val scope = rememberCoroutineScope()
 
+    // Адаптивный дизайн в зависимости от размера экрана
     val isTablet = windowSizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
+    
+    // Настройки отступов и размеров в зависимости от типа устройства
     val hPadding = if (isTablet) 32.dp else 16.dp
     val vGap = if (isTablet) 16.dp else 12.dp
     val controlH = if (isTablet) 56.dp else 48.dp
     val buttonWidthFraction = if (isTablet) 0.72f else 0.6f
     val contentMaxWidth = if (isTablet) 720.dp else 420.dp
+    
+    // Стили текста в зависимости от типа устройства
     val titleStyle =
         if (isTablet) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.headlineMedium
     val subtitleStyle =
         if (isTablet) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium
 
+    // Обработка эффектов от ViewModel
     LaunchedEffect(Unit) {
-        vm.effects.collectLatest { eff ->
-            if (eff is MenuEffect.NavigateToGame) onStart(eff.difficulty.name)
+        vm.effects.collectLatest { effect ->
+            // При получении эффекта навигации в игру вызываем колбэк onStart
+            if (effect is MenuEffect.NavigateToGame) onStart(effect.difficulty.name)
         }
     }
 
+    // Основной контейнер экрана
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsPadding()
-            .padding(horizontal = hPadding),
-        contentAlignment = Alignment.Center
+            .navigationBarsPadding() // Учитываем системную панель навигации
+            .padding(horizontal = hPadding), // Горизонтальные отступы
+        contentAlignment = Alignment.Center // Выравнивание по центру
     ) {
+        // Вертикальный контейнер для элементов меню
         Column(
             modifier = Modifier
-                .widthIn(max = contentMaxWidth)
+                .widthIn(max = contentMaxWidth) // Ограничиваем максимальную ширину
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center, // Вертикальное выравнивание по центру
+            horizontalAlignment = Alignment.CenterHorizontally, // Горизонтальное выравнивание по центру
         ) {
-            Text(text = stringResource(R.string.menu_title), style = titleStyle)
+            // Заголовок меню
+            Text(
+                text = stringResource(R.string.menu_title), 
+                style = titleStyle
+            )
 
+            // Отступ перед следующим элементом
             Spacer(Modifier.height(vGap))
-            Text(text = stringResource(R.string.select_difficulty), style = subtitleStyle)
+            
+            // Подзаголовок для выбора сложности
+            Text(
+                text = stringResource(R.string.select_difficulty), 
+                style = subtitleStyle
+            )
 
+            // Отступ перед переключателем сложности
             Spacer(Modifier.height(8.dp))
+            
+            // Горизонтальный ряд кнопок для выбора сложности
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
                     .widthIn(max = contentMaxWidth)
@@ -107,46 +145,71 @@ fun MenuScreen(
                 options.forEachIndexed { index, diff ->
                     SegmentedButton(
                         selected = ui.difficulty == diff,
-                        onClick = { vm.onEvent(MenuEvent.SelectDifficulty(diff)) },
+                        onClick = { 
+                            // Отправляем событие выбора сложности в ViewModel
+                            vm.onEvent(MenuEvent.SelectDifficulty(diff)) 
+                        },
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                         modifier = Modifier.height(controlH),
-                        // ✅ было: Text(diff.name)
+                        // Отображаем локализованное название сложности
                         label = { Text(stringResource(diff.titleRes())) },
                     )
                 }
             }
 
+            // Отступ перед настройкой звука
             Spacer(Modifier.height(vGap))
-            Text(text = stringResource(R.string.sound), style = subtitleStyle)
+            
+            // Подзаголовок для настройки звука
+            Text(
+                text = stringResource(R.string.sound), 
+                style = subtitleStyle
+            )
+            
+            // Переключатель звука
             Switch(
                 checked = ui.sound,
-                onCheckedChange = { vm.onEvent(MenuEvent.ToggleSound(it)) },
+                onCheckedChange = { 
+                    // Отправляем событие переключения звука в ViewModel
+                    vm.onEvent(MenuEvent.ToggleSound(it)) 
+                },
                 modifier = Modifier.height(controlH),
             )
 
+            // Увеличенный отступ перед кнопками
             Spacer(Modifier.height(vGap * 1.5f))
 
+            // Таймер для предотвращения двойных нажатий
             val lastClickMs = remember { mutableLongStateOf(0L) }
+            
+            // Кнопка начала игры
             Button(
                 onClick = {
+                    // Проверяем время с последнего нажатия
                     val now = SystemClock.uptimeMillis()
                     if (now - lastClickMs.longValue > 600L) {
                         lastClickMs.longValue = now
-                        scope.launch { if (throttle.allow()) vm.onEvent(MenuEvent.StartClicked) }
+                        // Запускаем в корутине с троттлингом
+                        scope.launch { 
+                            if (throttle.allow()) vm.onEvent(MenuEvent.StartClicked) 
+                        }
                     }
                 },
                 contentPadding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                 modifier = Modifier
-                    .fillMaxWidth(buttonWidthFraction)
-                    .height(controlH)
-                    .widthIn(max = contentMaxWidth),
+                    .fillMaxWidth(buttonWidthFraction) // Ширина кнопки в процентах от ширины экрана
+                    .height(controlH) // Высота кнопки
+                    .widthIn(max = contentMaxWidth), // Максимальная ширина
             ) {
                 Text(stringResource(R.string.start))
             }
 
+            // Отступ между кнопками
             Spacer(Modifier.height(8.dp))
+            
+            // Кнопка перехода к таблице рекордов
             Button(
-                onClick = onScores,
+                onClick = onScores, // Вызываем переданный колбэк
                 modifier = Modifier
                     .fillMaxWidth(buttonWidthFraction)
                     .height(controlH)
