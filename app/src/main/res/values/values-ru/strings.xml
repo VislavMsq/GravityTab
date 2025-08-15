@@ -1,7 +1,27 @@
-<resources>
-  <string name="start">Старт</string>
-  <string name="high_scores">Рекорды</string>
-  <string name="settings">Настройки</string>
-  <string name="play_again">Сыграть ещё</string>
+    <resources>
+    <string name="app_name">Gravity Tap</string>
+
+    <string name="splash_loading">Загрузка…</string>
+
+    <string name="menu_title">Меню</string>
+    <string name="start">Старт</string>
+    <string name="settings">Настройки</string>
+    <string name="sound">Звук</string>
+    <string name="select_difficulty">Выберите сложность</string>
+    <string name="difficulty_easy">Легко</string>
+    <string name="difficulty_normal">Нормально</string>
+    <string name="difficulty_hard">Сложно</string>
+
+    <string name="pause">Пауза</string>
+    <string name="resume">Продолжить</string>
+    <string name="score">Очки: %1$d</string>
+    <string name="lives">Жизни: %1$d</string>
+    <string name="combo">Комбо: %1$d</string>
+
+    <string name="result_title">Итог</string>
+    <string name="max_combo">Макс. комбо: %1$d</string>
+    <string name="difficulty_label">Сложность: %1$s</string>
+    <string name="play_again">Играть снова</string>
+    <string name="high_scores">Рекорды</string>
 </resources>
 

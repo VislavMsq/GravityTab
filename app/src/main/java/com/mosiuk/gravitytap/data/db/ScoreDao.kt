@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScoreDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(score: ScoreEntry)
 
     @Query("SELECT * FROM score_entries ORDER BY score DESC, date DESC LIMIT :limit")

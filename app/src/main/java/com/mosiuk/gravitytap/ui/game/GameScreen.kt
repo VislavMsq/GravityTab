@@ -1,14 +1,12 @@
-@file:OptIn(ExperimentalAnimationApi::class)
+@file:OptIn(androidx.compose.animation.ExperimentalAnimationApi::class)
 
 package com.mosiuk.gravitytap.ui.game
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -24,6 +22,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,11 +31,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.mosiuk.gravitytap.R
 import com.mosiuk.gravitytap.domain.game.GameEffect
 import com.mosiuk.gravitytap.ui.vm.GameUiEvent
 import com.mosiuk.gravitytap.ui.vm.GameViewModel
@@ -44,18 +44,28 @@ import com.mosiuk.gravitytap.ui.vm.GameViewModel
 fun GameScreen(
     vm: GameViewModel,
     onFinish: (score: Int, difficulty: String, maxCombo: Int) -> Unit,
+    windowSizeClass: WindowSizeClass,
 ) {
     val ui by vm.ui.collectAsState()
 
     LaunchedEffect(Unit) {
         vm.effects.collect { eff ->
-            when (eff) {
-                is GameEffect.GameOver -> onFinish(eff.score, eff.difficulty.name, eff.maxCombo)
+            if (eff is GameEffect.GameOver) {
+                onFinish(eff.score, eff.difficulty.name, eff.maxCombo)
             }
         }
     }
 
-    val ballSize: Dp = 72.dp
+    // чуть крупнее на планшете
+    val isTablet = windowSizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
+    val topHPadding = if (isTablet) 32.dp else 12.dp
+    val ballSize: Dp =
+        when (windowSizeClass.widthSizeClass) {
+            WindowWidthSizeClass.Compact -> 56.dp
+            WindowWidthSizeClass.Medium -> 80.dp
+            WindowWidthSizeClass.Expanded -> 96.dp
+            else -> 72.dp
+        }
 
     Scaffold(
         topBar = {
@@ -63,16 +73,30 @@ fun GameScreen(
                 modifier =
                     Modifier
                         .statusBarsPadding()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = topHPadding, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Score: ${ui.state.score}  Lives: ${ui.state.lives}  Combo: ${ui.state.combo}",
+                    text = stringResource(R.string.score, ui.state.score),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
+                Text(
+                    text = stringResource(R.string.lives, ui.state.lives),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = "   " + stringResource(R.string.combo, ui.state.combo),
+                    style = MaterialTheme.typography.titleMedium,
+                )
                 Button(onClick = { vm.onEvent(GameUiEvent.PauseToggle) }) {
-                    Text(if (ui.state.isPaused) "Resume" else "Pause")
+                    Text(
+                        if (ui.state.isPaused) {
+                            stringResource(R.string.resume)
+                        } else {
+                            stringResource(R.string.pause)
+                        },
+                    )
                 }
             }
         },
@@ -83,31 +107,17 @@ fun GameScreen(
                     .padding(inner)
                     .fillMaxSize(),
         ) {
-            // 1) density нужен для toPx()/toDp()
             val density = LocalDensity.current
 
-            // 2) размеры контейнера в px
             val widthPx = with(density) { maxWidth.toPx() }
             val heightPx = with(density) { maxHeight.toPx() }
-
             val cellW = widthPx / 3f
 
-            // 3) диаметр и радиус шарика в px
             val ballSizePx = with(density) { ballSize.toPx() }
             val ballRadiusPx = ballSizePx / 2f
 
-            // если у тебя есть событие установки «земли»
             LaunchedEffect(heightPx, ballSizePx) {
                 vm.onEvent(GameUiEvent.SetGround(groundPx = heightPx - ballSizePx))
-            }
-
-            // ... Canvas с сеткой
-            Canvas(Modifier.fillMaxSize()) {
-                val gridColor = Color.Black.copy(alpha = 0.05f)
-                val stroke = with(density) { 1.dp.toPx() }
-                drawLine(gridColor, Offset(cellW, 0f), Offset(cellW, size.height), strokeWidth = stroke)
-                drawLine(gridColor, Offset(cellW * 2, 0f), Offset(cellW * 2, size.height), strokeWidth = stroke)
-                drawLine(gridColor, Offset(0f, size.height / 2f), Offset(size.width, size.height / 2f), strokeWidth = stroke)
             }
 
             val ball = ui.state.ball
@@ -119,8 +129,6 @@ fun GameScreen(
                 if (ball != null) {
                     val centerXpx = (ball.column + 0.5f) * cellW
                     val leftXpx = centerXpx - ballRadiusPx
-
-                    // 4) конвертация px → dp для Modifier.offset(Dp, Dp)
                     val xDp = with(density) { leftXpx.toDp() }
                     val yDp = with(density) { ball.y.toDp() }
 
@@ -128,9 +136,9 @@ fun GameScreen(
                         modifier =
                             Modifier
                                 .offset(x = xDp, y = yDp)
-                                .size(ballSize) // 72.dp
+                                .size(ballSize)
                                 .clip(CircleShape)
-                                .background(Color.Red)
+                                .background(MaterialTheme.colorScheme.error)
                                 .clickable { vm.onEvent(GameUiEvent.OnBallTap) },
                     )
                 }

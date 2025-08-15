@@ -30,15 +30,18 @@ class ResultViewModel
         }
 
         private val score: Int = handle.get<Int>("score") ?: 0
-    private val difficulty: Difficulty = run {
-        val raw = handle.get<String>("difficulty")
-            ?.trim()
-            ?.removePrefix("{")
-            ?.removeSuffix("}")
-            ?.uppercase()
+        private val difficulty: Difficulty =
+            run {
+                val raw =
+                    handle
+                        .get<String>("difficulty")
+                        ?.trim()
+                        ?.removePrefix("{")
+                        ?.removeSuffix("}")
+                        ?.uppercase()
 
-        Difficulty.entries.firstOrNull { it.name == raw } ?: Difficulty.NORMAL
-    }
+                Difficulty.entries.firstOrNull { it.name == raw } ?: Difficulty.NORMAL
+            }
         private val maxCombo: Int = handle.get<Int>("maxCombo") ?: 0
 
         val ui: ResultUi = ResultUi(score, difficulty, maxCombo)
