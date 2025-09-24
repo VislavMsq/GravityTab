@@ -30,6 +30,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.FDGEntertain.databinding.ActivityMainBinding
+import com.FDGEntertain.repository.WebViewLifecycleDelegate
+import com.FDGEntertain.util.LogoAnimator
+import com.FDGEntertain.wv.SimpleWebViewLifecycleDelegate
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
@@ -38,15 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
-import kotlin.collections.joinToString
-import kotlin.collections.lastOrNull
-import kotlin.isInitialized
-import kotlin.jvm.java
-import kotlin.text.contains
-import kotlin.text.isNullOrBlank
-import kotlin.text.replace
-import kotlin.text.startsWith
-import kotlin.to
 
 /**
  * MainActivity — "дирижёр" старта приложения и загрузки WebView.
@@ -77,6 +71,9 @@ class MainActivityTest : AppCompatActivity() {
     // Временные переменные под запрос камеры/выбор файла (их колбэки приходят позже)
     private lateinit var pendingCameraRequest: PermissionRequest
     private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
+    private lateinit var logoAnimator: LogoAnimator
+    private lateinit var webViewLifecycle: WebViewLifecycleDelegate
+
 
     // =====================================================================================
     // 1) Точка входа. Вызывается системой при создании Activity (главный UI-поток).
@@ -87,8 +84,12 @@ class MainActivityTest : AppCompatActivity() {
         setupUi()                   // (UI) Инфлейтим layout, настраиваем отступы, показываем лоадер
         setupBackNavigation()       // (UI) Определяем поведение системной кнопки "назад"
         requestPostNotifications()  // (UI -> асинхронно) Запрашиваем разрешение на уведомления.
-                                    // После ответа ОС вызовет postNotificationsResultLauncher (см. ниже),
+        webViewLifecycle = SimpleWebViewLifecycleDelegate(webViews)
+        // После ответа ОС вызовет postNotificationsResultLauncher (см. ниже),
         // где мы стартуем Install Referrer.
+
+        logoAnimator = LogoAnimator(binding.logoImage)
+        logoAnimator.start()
     }
 
     // =====================================================================================
@@ -102,7 +103,8 @@ class MainActivityTest : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime()) // клавиатура и другой ввод
             val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars()) // навигация и бары
-            v.setPadding(sys.left, sys.top, sys.right,
+            v.setPadding(
+                sys.left, sys.top, sys.right,
                 kotlin.comparisons.maxOf(ime.bottom, sys.bottom)
             )
             insets
@@ -249,7 +251,7 @@ class MainActivityTest : AppCompatActivity() {
              * открыть игровую активность и закрыть текущую.
              */
             override fun onConsoleMessage(msg: ConsoleMessage?): Boolean {
-                if (msg?.message() == "openActivity") {
+                if (msg?.message() == "openFlipBoard") {
                     startActivity(
                         Intent(
                             this@MainActivityTest,
@@ -470,17 +472,16 @@ class MainActivityTest : AppCompatActivity() {
 
     // =====================================================================================
     // 10) Жизненный цикл Activity: важно для корректной работы WebView и куков.
+    //======================================================================================
     // =====================================================================================
     override fun onResume() {
         super.onResume()
-        CookieManager.getInstance().flush()          // синхронизируем куки на диск
-        webViews.lastOrNull()?.onResume()            // активируем верхний WebView
+        webViewLifecycle.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        CookieManager.getInstance().flush()
-        webViews.lastOrNull()?.onPause()             // паркуем верхний WebView (экономим ресурсы)
+        webViewLifecycle.onPause()
     }
 }
 

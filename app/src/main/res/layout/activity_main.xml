@@ -18,18 +18,22 @@
     <WebView
         android:id="@+id/rootWebView"
         android:layout_width="match_parent"
-        android:visibility="gone"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/circleProgressBarLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@drawable/load1"
         android:gravity="center">
 
         <ImageView
+            android:id="@+id/logoImage"
             android:layout_width="210dp"
-            android:layout_height="210dp"/>
+            android:layout_height="210dp"
+            android:src="@drawable/load2" />
+
 
     </LinearLayout>
 

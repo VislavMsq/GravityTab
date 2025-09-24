@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.FDGEntertain" />
+                  <option name="mobileSdkAppId" value="1:878370986727:android:a77210bdc0ed990ff36042" />
+                  <option name="projectId" value="chicken-flip-match-a519d" />
+                  <option name="projectNumber" value="878370986727" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
