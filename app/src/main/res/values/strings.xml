@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Gravity Tap</string>
+    <string name="app_name">Chicken Flip Match</string>
 
     <!-- Splash -->
     <string name="splash_loading">Loading…</string>

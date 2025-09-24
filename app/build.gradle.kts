@@ -1,90 +1,101 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.hilt.android)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-parcelize")
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.parcelize)  // Используйте правильное имя
+
 }
 
 android {
-    namespace = "com.mosiuk.gravitytap"
-    compileSdk = 35
+    namespace = "com.FDGEntertain"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.mosiuk.gravitytap"
+        applicationId = "com.FDGEntertain"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = 888
+        versionName = "2.88"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
+                "proguard-rules.pro"
             )
         }
     }
-
-    // ВЫРОВНЯТЬ Java на 17
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-
-    buildFeatures { compose = true }
-
-    // Для Kotlin 2.x composeOptions не нужен
-    // composeOptions { kotlinCompilerExtensionVersion = null }
-
-    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
-
-    // Можно оставить, но главное — toolchain и compileOptions
-    kotlinOptions { jvmTarget = "17" }
-}
-
-// <<< ВНЕ android {} >>>
-kotlin {
-    // Рекомендуемый способ для Kotlin 2.x
-    jvmToolchain(17)
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+    buildFeatures {
+        compose = true
+        viewBinding = true
+    }
 }
 
 dependencies {
-//    implementation(libs.lifecycle.runtime.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.compose.ui)
+    implementation(libs.androidx.material3.window.size)
+    implementation(libs.kotlinx.serialization.json)
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.compose.animation:animation:1.6.7")
+    implementation("androidx.browser:browser:1.7.0")
     implementation(libs.material)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.webkit)
+    implementation(libs.installreferrer)
+    implementation(libs.play.services.ads.identifier)
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.espresso.core)
 
-    implementation(libs.compose.material3)
-    implementation(libs.compose.window.size)
-    debugImplementation(libs.compose.ui.tooling)
+    // ViewModel Compose
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    implementation(libs.activity.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.navigation.compose)
-
+    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.hilt.nav.compose)
+    implementation(libs.hilt.navigation.compose)
 
+    // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    implementation(libs.datastore.prefs)
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.coroutines.android)
-
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.api)
-    testRuntimeOnly(libs.junit.engine)
-
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.androidx.test.ext)
-    androidTestImplementation(libs.espresso.core)
+    // Hilt Testing
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
 }
