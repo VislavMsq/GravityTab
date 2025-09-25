@@ -87,7 +87,7 @@ class MainActivityTest : AppCompatActivity() {
 
     // Временные переменные под запрос камеры/выбор файла (их колбэки приходят позже)
     private lateinit var pendingCameraRequest: PermissionRequest
-    private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
+//    private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
     private lateinit var logoAnimator: LogoAnimator
     private lateinit var webViewLifecycle: WebViewLifecycleDelegate
     private lateinit var backNavigator: WebViewBackNavigator
@@ -338,8 +338,6 @@ class MainActivityTest : AppCompatActivity() {
                 fileChooserParams: FileChooserParams?
             ): Boolean {
                 // Если вдруг висел старый колбэк — аккуратно "обнулим" его
-                pendingFileChooser?.onReceiveValue(null)
-                pendingFileChooser = filePathCallback
                 return fileChooser.onShowFileChooser(fileChooserParams, filePathCallback)
             }
         }

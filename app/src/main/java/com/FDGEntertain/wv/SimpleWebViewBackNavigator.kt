@@ -6,7 +6,6 @@ import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.core.view.isVisible
-import androidx.core.view.size
 import com.FDGEntertain.repositoryWebView.WebViewBackNavigator
 
 class SimpleWebViewBackNavigator(
@@ -15,12 +14,11 @@ class SimpleWebViewBackNavigator(
     private val progress: View,
     private val webViews: MutableList<WebView>
 ) : WebViewBackNavigator {
+
     override fun install() {
-        // Привязка к жизненному циклу Activity — колбэк снимется сам при destroy
         activity.onBackPressedDispatcher.addCallback(activity) {
             onBackPressed()
         }
-
     }
 
     override fun onBackPressed() {
@@ -30,17 +28,21 @@ class SimpleWebViewBackNavigator(
             activity.finish()
             return
         }
-        // 3) Если это единственный WebView
-        if (top.size == 1) top.canGoBack() else activity.finish()
-        // 4) В стеке больше одного WebView
-        if (top.canGoBack()){
-            top.goBack()
-        } else{
-            root.removeView(top)
-            top.destroy()
-            webViews.removeAt(webViews.lastIndex)
+
+        if (webViews.size == 1) {
+            if (top.canGoBack()) {
+                top.goBack()
+            } else {
+                activity.finish()
+            }
+        } else {
+            if (top.canGoBack()) {
+                top.goBack()
+            } else {
+                root.removeView(top)
+                top.destroy()
+                webViews.removeAt(webViews.lastIndex)
+            }
         }
     }
-
-
 }
