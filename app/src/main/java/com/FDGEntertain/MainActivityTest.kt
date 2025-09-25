@@ -315,7 +315,7 @@ class MainActivityTest : AppCompatActivity() {
                 val newWv = WebView(this@MainActivityTest)
                 initWebView(newWv)
                 binding.root.addView(newWv)
-                webViews.add(newWv)
+//                webViews.add(newWv)
                 return newWv
             }
 
