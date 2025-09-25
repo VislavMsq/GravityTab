@@ -1,4 +1,4 @@
-package com.FDGEntertain.repository
+package com.FDGEntertain.repositoryWebView
 
 interface WebViewLifecycleDelegate {
     fun onResume()

@@ -2,7 +2,7 @@ package com.FDGEntertain.wv
 
 import android.webkit.CookieManager
 import android.webkit.WebView
-import com.FDGEntertain.repository.WebViewLifecycleDelegate
+import com.FDGEntertain.repositoryWebView.WebViewLifecycleDelegate
 
 class SimpleWebViewLifecycleDelegate(
     private val webViews: List<WebView>,

@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowInsetsControllerCompat
+import com.google.firebase.messaging.FirebaseMessaging
 
 @Composable
 fun ApplySystemBars(
@@ -37,4 +38,39 @@ fun ApplySystemBars(
             controller.isAppearanceLightNavigationBars = prevLightNav
         }
     }
+}
+
+class FcmTokenFetcher {
+    fun fetch(onToken: (String) -> Unit) {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            val frbToken = if (task.isSuccessful) task.result ?: "" else ""
+            onToken(frbToken)
+        }
+    }
+}
+
+class StartUrlBuilder(
+    private val baseUrl: String,
+    private val packageName: String
+) {
+    /** Сборка URL из refer, frbToken и adId (порядок параметров сохранён). */
+    fun buildStartUrl(refer: String, frbToken: String, adId: String): String {
+        val query = buildQuery(
+            mapOf(
+                "flipAdNest" to adId,
+                "matchReferCode" to refer,
+                "wingFrbToken" to frbToken,
+                "comboEggPack" to packageName
+            )
+        )
+        return appendQuery(baseUrl, query)
+    }
+
+    // Делает "a=1&b=2" (без percent-encoding — ровно как у тебя было)
+    private fun buildQuery(params: Map<String, String>): String =
+        params.entries.joinToString("&") { "${it.key}=${it.value}" }
+
+    // Если в baseUrl уже есть '?', приклеим через '&', иначе через '?'
+    private fun appendQuery(baseUrl: String, query: String): String =
+        if (baseUrl.contains("?")) "$baseUrl&$query" else "$baseUrl?$query"
 }
